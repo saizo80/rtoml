@@ -1,3 +1,5 @@
+[![.github/workflows/rust.yml](https://github.com/saizo80/rtoml/actions/workflows/rust.yml/badge.svg)](https://github.com/saizo80/rtoml/actions/workflows/rust.yml)
+[![dependency status](https://deps.rs/repo/github/saizo80/rtoml/status.svg)](https://deps.rs/repo/github/saizo80/rtoml)
 # RTOML
 
 command line toml file parser written in rust
