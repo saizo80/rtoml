@@ -9,7 +9,7 @@ description = "toml file parser written in Rust"
 readme = "README.md"
 license = "MIT"
 keywords = ["toml", "parser", "cli"]
-categories = ["cli", "parser"]
+categories = ["command-line-utilities", "config", "parsing", "text-processing"]
 
 [[bin]]
 name = "rtoml"
