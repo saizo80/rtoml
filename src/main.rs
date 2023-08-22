@@ -2,6 +2,7 @@ use argparse::{ArgumentParser, Store, StoreTrue};
 use log::{debug, error};
 use std::{env, fs::File, io::Read, process::exit};
 
+// define package metadata
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
 const REPO: &str = env!("CARGO_PKG_REPOSITORY");
@@ -15,11 +16,13 @@ fn main() {
         error!("input file must be a TOML file");
         exit(1);
     }
+
     let input_file_path = std::path::Path::new(&input_file_str);
     if !input_file_path.exists() || !input_file_path.is_file() {
         error!("{input_file_str} file does not exist");
         exit(1);
     }
+
     let mut input_file = match File::open(&input_file_str) {
         Ok(f) => f,
         Err(e) => {
@@ -28,6 +31,7 @@ fn main() {
         }
     };
 
+    // read file content to string
     let mut input_file_contents = String::new();
     match input_file.read_to_string(&mut input_file_contents) {
         Ok(_) => (),
@@ -37,6 +41,7 @@ fn main() {
         }
     };
 
+    // parse TOML content
     let toml_content = match input_file_contents.parse::<toml::Value>() {
         Ok(t) => t,
         Err(e) => {
@@ -46,11 +51,15 @@ fn main() {
     };
 
     debug!("toml_content: {:?}", toml_content);
+
+    // split key into parts
     let key_parts: Vec<String> = key.split('.').map(|s| s.to_string()).collect();
 
+    // find value for key
     let value = find_value(key_parts, toml_content).unwrap();
     debug!("returned value: {:?}", value);
 
+    // print value
     match value {
         toml::Value::String(s) => println!("{}", s),
         toml::Value::Integer(i) => println!("{}", i),
@@ -66,6 +75,7 @@ fn main() {
 }
 
 fn print_array(array: toml::value::Array) {
+    // function for printing each value in an array
     for value in array {
         match value {
             toml::Value::String(s) => println!("{}", s),
@@ -87,6 +97,7 @@ fn find_value(key_parts: Vec<String>, mut toml_content: toml::Value) -> Option<t
         debug!("part: {}", part);
         if toml_content.is_table() {
             let table = toml_content.as_table().unwrap();
+            // if key is in table and is the last part of the key, return the value
             if table.contains_key(part) {
                 debug!("found key: {}", part);
                 let value = table.get(part).unwrap();
@@ -94,6 +105,8 @@ fn find_value(key_parts: Vec<String>, mut toml_content: toml::Value) -> Option<t
                 if i == key_parts.len() - 1 {
                     return Some(value.clone());
                 }
+                // if key is in table and is not the last part of the key
+                // set toml_content to the value
                 toml_content = value.clone();
             } else {
                 error!("key not found: {}", part);
@@ -108,18 +121,17 @@ fn find_value(key_parts: Vec<String>, mut toml_content: toml::Value) -> Option<t
 }
 
 fn parse_args() -> (String, String) {
+    // parse command line arguments
     let mut input_file = String::new();
     let mut key = String::new();
     let mut debug: bool = false;
     let mut version: bool = false;
     {
         let mut ap = ArgumentParser::new();
-        ap.set_description(
-            "rtoml - read a TOML file and print the value of a key",
-        );
+        ap.set_description("rtoml - read a TOML file and print the value of a key");
         ap.refer(&mut input_file)
-            .add_argument("input_file", Store, "input file");
-        ap.refer(&mut key).add_argument("key", Store, "key");
+            .add_argument("input_file", Store, "");
+        ap.refer(&mut key).add_argument("key", Store, "");
         ap.refer(&mut debug)
             .add_option(&["--debug"], StoreTrue, "enable debug logging");
         ap.refer(&mut version).add_option(
@@ -132,16 +144,18 @@ fn parse_args() -> (String, String) {
     if version {
         println!("rtoml v{VERSION}");
         println!("author: {AUTHORS}");
-        println!("source/documenation at {REPO}");
+        println!("source/documentation at {REPO}");
         exit(0);
     }
+    // init logging
     if debug {
         env::set_var("RUST_LOG", "debug");
         env::set_var("RUST_BACKTRACE", "1");
     } else {
         env::set_var("RUST_LOG", "info");
     }
-    sensible_env_logger::init_timed_local!();
+    sensible_env_logger::init!();
     debug!("debug logging enabled");
+
     (input_file, key)
 }
