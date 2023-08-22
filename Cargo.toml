@@ -1,15 +1,25 @@
 [package]
-name = "rtoml"
+name = "rtoml-cli"
 version = "0.1.0"
 edition = "2021"
 repository = "https://github.com/saizo80/rtoml"
+homepage = "https://github.com/saizo80/rtoml"
 authors = ["saizo <saizo@simplemail.is>"]
 description = "toml file parser written in Rust"
+readme = "README.md"
+license-file = "LICENSE"
+license = "MIT"
+keywords = ["toml", "parser", "cli"]
+categories = ["cli", "parser"]
+
+[[bin]]
+name = "rtoml"
+path = "src/main.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 argparse = "0.2.2"
 log = "0.4.20"
-sensible-env-logger = { version = "0.3.2", features = ["local-time"] }
+sensible-env-logger = "0.3.2"
 toml = "0.7.6"
