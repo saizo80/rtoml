@@ -9,13 +9,8 @@ const REPO: &str = env!("CARGO_PKG_REPOSITORY");
 
 fn main() {
     let (input_file_str, key) = parse_args();
-    debug!("input file: {}", input_file_str);
-    debug!("key: {}", key);
-
-    if !input_file_str.ends_with(".toml") {
-        error!("input file must be a TOML file");
-        exit(1);
-    }
+    debug!("input file: {input_file_str}");
+    debug!("key: {key}");
 
     let input_file_path = std::path::Path::new(&input_file_str);
     if !input_file_path.exists() || !input_file_path.is_file() {
@@ -26,7 +21,7 @@ fn main() {
     let mut input_file = match File::open(&input_file_str) {
         Ok(f) => f,
         Err(e) => {
-            error!("error opening {input_file_str}: {}", e);
+            error!("error opening {input_file_str}: {e}");
             exit(5);
         }
     };
@@ -36,7 +31,7 @@ fn main() {
     match input_file.read_to_string(&mut input_file_contents) {
         Ok(_) => (),
         Err(e) => {
-            error!("error reading {input_file_str}: {}", e);
+            error!("error reading {input_file_str}: {e}");
             exit(5);
         }
     };
@@ -45,7 +40,7 @@ fn main() {
     let toml_content = match input_file_contents.parse::<toml::Value>() {
         Ok(t) => t,
         Err(e) => {
-            error!("error parsing {input_file_str}: {}", e);
+            error!("error parsing {input_file_str}: {e}");
             exit(5);
         }
     };
@@ -60,46 +55,43 @@ fn main() {
     debug!("returned value: {:?}", value);
 
     // print value
-    match value {
-        toml::Value::String(s) => println!("{}", s),
-        toml::Value::Integer(i) => println!("{}", i),
-        toml::Value::Float(f) => println!("{}", f),
-        toml::Value::Boolean(b) => println!("{}", b),
-        toml::Value::Datetime(d) => println!("{}", d),
-        toml::Value::Array(a) => print_array(a),
-        toml::Value::Table(_t) => {
-            error!("value is a table");
-            exit(6);
-        }
-    }
+    match_and_print(value, false);
 }
 
 fn print_array(array: toml::value::Array) {
     // function for printing each value in an array
     for value in array {
-        match value {
-            toml::Value::String(s) => println!("{}", s),
-            toml::Value::Integer(i) => println!("{}", i),
-            toml::Value::Float(f) => println!("{}", f),
-            toml::Value::Boolean(b) => println!("{}", b),
-            toml::Value::Datetime(d) => println!("{}", d),
-            toml::Value::Array(a) => print_array(a),
-            toml::Value::Table(_t) => {
-                error!("array contains a table");
-                exit(6);
+        match_and_print(value, true);
+    }
+}
+
+fn match_and_print(value: toml::Value, from_array: bool) {
+    match value {
+        toml::Value::String(s) => println!("{s}"),
+        toml::Value::Integer(i) => println!("{i}"),
+        toml::Value::Float(f) => println!("{f}"),
+        toml::Value::Boolean(b) => println!("{b}"),
+        toml::Value::Datetime(d) => println!("{d}"),
+        toml::Value::Array(a) => print_array(a),
+        toml::Value::Table(_t) => {
+            if from_array {
+                error!("table in an array? how did you do this?\nplease open an issue at {REPO}");
+            } else {
+                error!("value is a table");
             }
+            exit(6);
         }
     }
 }
 
 fn find_value(key_parts: Vec<String>, mut toml_content: toml::Value) -> Option<toml::Value> {
     for (i, part) in key_parts.iter().enumerate() {
-        debug!("part: {}", part);
+        debug!("part: {part}");
         if toml_content.is_table() {
             let table = toml_content.as_table().unwrap();
             // if key is in table and is the last part of the key, return the value
             if table.contains_key(part) {
-                debug!("found key: {}", part);
+                debug!("found key: {part}");
                 let value = table.get(part).unwrap();
                 debug!("value: {:?}", value);
                 if i == key_parts.len() - 1 {
@@ -109,11 +101,11 @@ fn find_value(key_parts: Vec<String>, mut toml_content: toml::Value) -> Option<t
                 // set toml_content to the value
                 toml_content = value.clone();
             } else {
-                error!("key not found: {}", part);
+                error!("key not found: {part}");
                 exit(1);
             }
         } else {
-            error!("value is not a table");
+            error!("value does not seem to be a TOML table");
             exit(1);
         }
     }
@@ -156,6 +148,17 @@ fn parse_args() -> (String, String) {
     }
     sensible_env_logger::init!();
     debug!("debug logging enabled");
+
+    if input_file.is_empty() && key.is_empty() {
+        error!("input file and key are required");
+        exit(2);
+    } else if input_file.is_empty() {
+        error!("input file is required");
+        exit(2);
+    } else if key.is_empty() {
+        error!("key is required");
+        exit(2);
+    }
 
     (input_file, key)
 }
