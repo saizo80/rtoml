@@ -56,4 +56,4 @@ spaces in table and value names are also supported as long as the entire passed 
 
 `cargo install rtoml-cli`
 
-precompiled binaries are also available on github if rust is not installed on the computer
+precompiled binaries are also available on github if rust is not installed on the target machine
