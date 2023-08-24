@@ -1,6 +1,6 @@
 use argparse::{ArgumentParser, Store, StoreTrue};
-use log::{debug, error};
 use std::{env, fs::File, io::Read, process::exit};
+mod macros;
 
 // define package metadata
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -146,7 +146,6 @@ fn parse_args() -> (String, String) {
     } else {
         env::set_var("RUST_LOG", "info");
     }
-    sensible_env_logger::init!();
     debug!("debug logging enabled");
 
     if input_file.is_empty() && key.is_empty() {
